@@ -1,14 +1,11 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   ArrowUpRight,
-  HeartHandshake,
   Check,
-  MessageCircleMore,
   RotateCcw,
   SendHorizontal,
-  ShoppingBag,
   Sparkles,
 } from 'lucide-react';
 
@@ -36,12 +33,10 @@ type Message = {
   time: string;
   product?: Product | null;
 };
-type Signals = { emotion: string; stage: string; need: string };
 type ChatResponse = {
   session_id: string;
   message_id: string;
   reply: string;
-  signals: Signals;
   product: Product | null;
 };
 type HistoryMessage = {
@@ -57,13 +52,6 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL ?? (
     ? 'http://localhost:8000'
     : `${window.location.protocol}//${window.location.hostname}:8000`
 );
-const initialSignals: Signals = { emotion: '等待交流', stage: '尚未了解', need: '等待交流' };
-const productSummary: Record<ProductCode, { name: string; price: string; credits: string }> = {
-  starter: { name: 'Starter', price: '$29', credits: '300 Credits' },
-  standard: { name: 'Standard', price: '$99', credits: '1,000 Credits' },
-  pro: { name: 'Pro', price: '$199', credits: '2,000 Credits' },
-  agency: { name: 'Agency', price: 'Custom', credits: '按方案配置' },
-};
 const welcomeMessage: Message = {
   id: 'welcome',
   role: 'assistant',
@@ -117,7 +105,6 @@ export default function Home() {
   const [messages, setMessages] = useState<Message[]>([welcomeMessage]);
   const [input, setInput] = useState('');
   const [thinking, setThinking] = useState(false);
-  const [signals, setSignals] = useState<Signals>(initialSignals);
   const [error, setError] = useState('');
   const [sessionId, setSessionId] = useState('');
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -132,8 +119,6 @@ export default function Home() {
       .then((history: HistoryMessage[]) => {
         if (history.length) {
           setMessages(history.map((item) => ({ ...item, time: formatTime(item.created_at) })));
-          const lastAssistant = [...history].reverse().find((item) => item.role === 'assistant');
-          if (lastAssistant) setSignals({ emotion: '已恢复会话', stage: '继续交流', need: '查看历史消息' });
         }
       })
       .catch(() => setError('暂时无法连接后端，请确认 FastAPI 已启动。'));
@@ -142,11 +127,6 @@ export default function Home() {
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }, [messages, thinking]);
-
-  const latestPlan = useMemo(
-    () => [...messages].reverse().find((message) => message.product)?.product?.code,
-    [messages],
-  );
 
   const sendMessage = async (preset?: string) => {
     const text = (preset ?? input).trim();
@@ -165,7 +145,6 @@ export default function Home() {
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.detail ?? '请求失败');
       const result = payload as ChatResponse;
-      setSignals(result.signals);
       setMessages((current) => [...current, {
         id: result.message_id,
         role: 'assistant',
@@ -188,7 +167,6 @@ export default function Home() {
     window.localStorage.setItem('nola-demo-session-id', nextId);
     setSessionId(nextId);
     setMessages([welcomeMessage]);
-    setSignals(initialSignals);
     setError('');
     setInput('');
   };
@@ -203,7 +181,7 @@ export default function Home() {
         <Button variant="ghost" size="sm" onClick={resetChat} className="rounded-full text-[#755d7d] hover:bg-[#eee6f0]" aria-label="重新开始对话"><RotateCcw /><span>重新开始</span></Button>
       </header>
 
-      <div className="mx-auto grid h-[calc(100vh-68px)] max-w-[1500px] grid-cols-[250px_minmax(0,1fr)_288px]">
+      <div className="mx-auto grid h-[calc(100vh-68px)] max-w-[1500px] grid-cols-[250px_minmax(0,1fr)]">
         <aside className="flex flex-col border-r border-[#e7dfe8] bg-[#f2ecef] p-5">
           <div className="rounded-[26px] bg-[#fbf8f8] p-4 shadow-[0_14px_40px_rgba(56,39,62,0.07)] ring-1 ring-[#e6dce7]">
             <div className="relative overflow-hidden rounded-[22px] bg-gradient-to-b from-[#d9c8e5] to-[#f2ddd1] p-2">
@@ -214,11 +192,6 @@ export default function Home() {
               <div className="flex items-center justify-between"><h2 className="text-lg font-semibold">Nola</h2><Badge className="bg-[#efe5f2] text-[#714f7e]">AI 顾问</Badge></div>
               <p className="mt-1 text-sm leading-5 text-[#7d6d81]">懂创作者情绪，也能结合公开资料回答 Onely 问题。</p>
             </div>
-          </div>
-          <div className="mt-5 space-y-2.5 px-1">
-            <div className="flex items-center gap-3 rounded-xl bg-white/60 px-3 py-2.5 text-sm text-[#66566b]"><MessageCircleMore className="size-4 text-[#8a61a0]" />DeepSeek 多轮问答</div>
-            <div className="flex items-center gap-3 rounded-xl bg-white/60 px-3 py-2.5 text-sm text-[#66566b]"><HeartHandshake className="size-4 text-[#c16d84]" />理解当前情绪</div>
-            <div className="flex items-center gap-3 rounded-xl bg-white/60 px-3 py-2.5 text-sm text-[#66566b]"><ShoppingBag className="size-4 text-[#c78658]" />匹配 Onely 套餐</div>
           </div>
         </aside>
 
@@ -255,14 +228,6 @@ export default function Home() {
           </div>
         </section>
 
-        <aside className="block border-l border-[#e7dfe8] bg-[#f8f4f5] p-5">
-          <div className="mb-5 flex items-center justify-between"><div><p className="text-sm font-semibold">本轮理解</p><p className="mt-0.5 text-xs text-[#958698]">随对话实时变化</p></div><div className="grid size-8 place-items-center rounded-xl bg-[#eee4f0] text-[#765384]"><HeartHandshake className="size-4" /></div></div>
-          <div className="space-y-2.5">{[['情绪', signals.emotion], ['阶段', signals.stage], ['当前需求', signals.need]].map(([label, value]) => <div key={label} className="rounded-xl border border-[#e6dce7] bg-white/75 px-3.5 py-3"><p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#9a8a9e]">{label}</p><p className="mt-1 text-sm font-medium text-[#514156]">{value}</p></div>)}</div>
-          <div className="my-5 h-px bg-[#e5dce6]" />
-          <div className="mb-3 flex items-center justify-between"><p className="text-sm font-semibold">Onely 套餐</p><ShoppingBag className="size-4 text-[#9a789d]" /></div>
-          <div className="space-y-2">{(Object.entries(productSummary) as [ProductCode, (typeof productSummary)[ProductCode]][]).map(([code, product]) => <div key={code} className={`flex items-center justify-between rounded-xl border px-3 py-2.5 transition-colors ${latestPlan === code ? 'border-[#a982b2] bg-[#f1e7f3]' : 'border-transparent bg-white/60'}`}><div><p className="text-sm font-medium text-[#514156]">{product.name}</p><p className="text-[11px] text-[#968699]">{product.credits}</p></div><span className="text-sm font-semibold text-[#6f4b7d]">{product.price}</span></div>)}</div>
-          <div className="mt-5 rounded-2xl bg-[#34293a] p-4 text-white shadow-lg shadow-[#3a2c41]/10"><div className="mb-2 flex items-center gap-2 text-xs font-semibold text-[#e7d5eb]"><Sparkles className="size-3.5" />MVP 演示提示</div><p className="text-xs leading-5 text-[#d4c7d7]">试试“小团队高频更新”或“刚开始且预算不高”，查看不同的套餐卡片。</p></div>
-        </aside>
       </div>
     </main>
   );
