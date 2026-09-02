@@ -1,3 +1,4 @@
+/// <reference types="vite/client" />
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
@@ -114,14 +115,18 @@ export default function Home() {
     const id = existing ?? crypto.randomUUID();
     window.localStorage.setItem('nola-demo-session-id', id);
     setSessionId(id);
-    fetch(`${API_BASE}/api/sessions/${id}/messages`)
-      .then((response) => response.ok ? response.json() : Promise.reject(new Error('history')))
-      .then((history: HistoryMessage[]) => {
+    (async () => {
+      try {
+        const response = await fetch(`${API_BASE}/api/sessions/${id}/messages`);
+        if (!response.ok) throw new Error('history');
+        const history = (await response.json()) as HistoryMessage[];
         if (history.length) {
           setMessages(history.map((item) => ({ ...item, time: formatTime(item.created_at) })));
         }
-      })
-      .catch(() => setError('暂时无法连接后端，请确认 FastAPI 已启动。'));
+      } catch {
+        setError('暂时无法连接后端，请确认 FastAPI 已启动。');
+      }
+    })();
   }, []);
 
   useEffect(() => {
@@ -142,8 +147,11 @@ export default function Home() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ session_id: sessionId, message: text }),
       });
-      const payload = await response.json();
-      if (!response.ok) throw new Error(payload.detail ?? '请求失败');
+      const payload: unknown = await response.json();
+      if (!response.ok) {
+        const detail = (payload as { detail?: string } | null)?.detail;
+        throw new Error(detail ?? '请求失败');
+      }
       const result = payload as ChatResponse;
       setMessages((current) => [...current, {
         id: result.message_id,
