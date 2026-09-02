@@ -39,17 +39,9 @@ git clone https://github.com/tianjinyi/nola-onely-chatbot-mvp.git
 cd nola-onely-chatbot-mvp
 ```
 
-## 2. 配置大模型厂商与 API
+## 2. 配置 API
 
-本项目接入了支持 Chat Completions 的 LLM API，**唯一需要你自己填写的是根目录 `.env` 文件中的三个变量**：
-
-```dotenv
-DEEPSEEK_API_KEY=你的模型服务商 API Key
-DEEPSEEK_BASE_URL=模型服务商的接口地址
-DEEPSEEK_MODEL=要使用的模型名称
-```
-
-首次运行先把模板复制为 `.env`：
+复制 `.env.example` 为根目录 `.env`：
 
 Linux / macOS：
 
@@ -63,54 +55,15 @@ Windows PowerShell：
 Copy-Item .env.example .env
 ```
 
-然后编辑根目录的 `.env`，把 `DEEPSEEK_API_KEY` 替换成你自己的 Key。
-
-### 2.1 使用 DeepSeek（默认示例）
-
-如果你用 DeepSeek 官方服务，在 DeepSeek 开放平台创建 API Key 后，这样填写：
+打开 `.env`，把 `DEEPSEEK_API_KEY` 替换成你自己的 API Key 即可：
 
 ```dotenv
-# 在这里填你自己申请的 Key；不要把真实 Key 提交到 Git
-DEEPSEEK_API_KEY=sk-你的DeepSeek_API_Key
+DEEPSEEK_API_KEY=你的API_Key
 DEEPSEEK_BASE_URL=https://api.deepseek.com
 DEEPSEEK_MODEL=deepseek-v4-flash
 ```
 
-DeepSeek 官方文档：<https://api-docs.deepseek.com/>
-
-> 注意：后端代码默认按上面这套变量读取模型厂商和 Key。`DEEPSEEK_API_KEY`、`DEEPSEEK_BASE_URL`、`DEEPSEEK_MODEL` 都来自根目录 `.env`，请勿把它们写进源码或提交到 Git。
-
-### 2.2 换成其他大模型厂商
-
-本项目使用 OpenAI 兼容的 Chat Completions 接口。想换厂商时，只需把 `.env` 中的三个变量改成对应值即可：
-
-```dotenv
-DEEPSEEK_API_KEY=你的API_Key
-DEEPSEEK_BASE_URL=服务商提供的接口地址（OpenAI兼容）
-DEEPSEEK_MODEL=服务商提供的模型名称
-```
-
-常见示例：
-
-```dotenv
-# OpenAI
-DEEPSEEK_API_KEY=sk-你的OpenAI_Key
-DEEPSEEK_BASE_URL=https://api.openai.com/v1
-DEEPSEEK_MODEL=gpt-4o-mini
-```
-
-```dotenv
-# 其他任何 OpenAI 兼容厂商，例如智谱/月之暗面/通义等
-DEEPSEEK_API_KEY=你的API_Key
-DEEPSEEK_BASE_URL=https://服务商提供的兼容地址/v1
-DEEPSEEK_MODEL=服务商提供的模型名
-```
-
-### 2.3 修改后的验证
-
-1. 保存 `.env` 后**重启后端**（FastAPI 只在启动时读取一次 `.env`）。
-2. 打开 <http://localhost:8000/api/health>，`deepseek_configured` 应为 `true`，页面里不会显示 Key 本身。
-3. 再回到页面发送一条消息，确认能收到模型回复。
+不要把真实 Key 提交到 Git。
 
 ## 3. 启动后端
 
