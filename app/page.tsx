@@ -105,7 +105,7 @@ function PlanCard({ product }: { product: Product }) {
       </CardContent>
       <CardFooter className="justify-between border-[#eee7f0] bg-[#fcfafc]">
         <span className="text-xs text-[#8a788f]">公开信息 · Private Beta</span>
-        <Button size="sm" nativeButton={false} className="rounded-full bg-[#6f4b7d] px-3.5 text-white hover:bg-[#5c3d69]" render={<a href={product.purchase_url} target="_blank" rel="noreferrer" />}>
+        <Button size="sm" nativeButton={false} className="rounded-full bg-[#6f4b7d] px-3.5 text-white hover:bg-[#5c3d69]" render={<a href={product.purchase_url} />}>
           申请体验<ArrowUpRight />
         </Button>
       </CardFooter>
